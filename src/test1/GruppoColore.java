@@ -24,13 +24,7 @@ public class GruppoColore {
 
 	public void add(SpecialPixel specialPixel) {
 		numeroPixel++;
-		bordoDestra.put(specialPixel.x, specialPixel);
-	}
-
-	public int getDistanza() {
-		if (sommaDistanza != 0)
-			return sommaDistanza/bordoDestra.size();
-		return -1;
+		bordoDestra.put(specialPixel.y, specialPixel);
 	}
 
 }
