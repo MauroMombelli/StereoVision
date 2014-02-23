@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.TreeMap;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -55,16 +54,16 @@ public class Loader {
 
 	private void elaborateColor(BufferedImage sx, BufferedImage dx) {
 
-		//TreeMap<Integer, GruppoColore> mappaColori = new TreeMap<>();
+		// TreeMap<Integer, GruppoColore> mappaColori = new TreeMap<>();
 		ArrayList<GruppoColore> listaGruppi = new ArrayList<GruppoColore>();
 
 		SpecialPixel[][] mappaPixel = new SpecialPixel[sx.getWidth()][sx.getHeight()];
 
 		int LSB = 4;
-		
+
 		BufferedImage resultSx = new BufferedImage(sx.getWidth(), sx.getHeight(), sx.getType());
 		{
-			
+
 			for (int w = 0; w < sx.getWidth(); w++) {
 				for (int h = 0; h < sx.getHeight(); h++) {
 					int rgb = sx.getRGB(w, h);
@@ -115,15 +114,15 @@ public class Loader {
 						boolean esegui = true;
 						if (esegui && w > 0 && mappaPixel[w - 1][h].gruppo.numeroPixel < 15) {
 							gruppo = mappaPixel[w - 1][h].gruppo;
-							//System.out.println("riutilizzo gruppo: " + gruppo.id + " " + w + " " + h + " " + mappaPixel[w - 1][h].gruppo.numeroPixel);
+							// System.out.println("riutilizzo gruppo: " + gruppo.id + " " + w + " " + h + " " + mappaPixel[w - 1][h].gruppo.numeroPixel);
 						} else {
-							gruppo = new GruppoColore(io, nextColor());
+							gruppo = new GruppoColore( nextColor() );
 							listaGruppi.add(gruppo);
-							//System.out.print("nuovo gruppo: " + gruppo.id + " " + w + " " + h);
+							// System.out.print("nuovo gruppo: " + gruppo.id + " " + w + " " + h);
 							if (w > 0) {
-								//System.out.println(" precendete " + mappaPixel[w - 1][h].gruppo.id + " era grande: " + mappaPixel[w - 1][h].gruppo.numeroPixel);
+								// System.out.println(" precendete " + mappaPixel[w - 1][h].gruppo.id + " era grande: " + mappaPixel[w - 1][h].gruppo.numeroPixel);
 							} else {
-								//System.out.println(" nuova riga");
+								// System.out.println(" nuova riga");
 							}
 						}
 
@@ -146,34 +145,52 @@ public class Loader {
 		}
 		BufferedImage resultDx = new BufferedImage(dx.getWidth(), dx.getHeight(), dx.getType());
 		{
-			
-			int yOk = 
-			//okk cerchiamo i bordiii
-			for(GruppoColore g:listaGruppi){
-				for (SpecialPixel p : g.bordoDestra.values()){
-					for (int i = p.x; i > 0; i--){
-						int rgb = dx.getRGB(i, p.y);
 
+			int xOk = -1;
+			// okk cerchiamo i bordiii
+			for (GruppoColore g : listaGruppi) {
+				
+				for (SpecialPixel p : g.bordoDestra.values()) {
+					int begin;
+					if (xOk == -1) {
+						begin = p.x;
+					} else {
+						begin = xOk;
+					}
+					
+					boolean found = false;
+					for (int i = begin; i > 0; i--) {
+						int rgb = dx.getRGB(i, p.y);
 						int red = (rgb >> 16) & 0xFF;
 						int green = (rgb >> 8) & 0xFF;
 						int blue = (rgb) & 0xFF;
-
 						red >>= LSB;
 						green >>= LSB;
 						blue >>= LSB;
-
 						red <<= LSB;
 						green <<= LSB;
 						blue <<= LSB;
-
 						rgb = (red << 16) | (green << 8) | blue;
-						if (rgb == p.rgb){
-							
+
+						if (rgb == p.rgb) {
+							xOk = i;
+							g.sommaDistanza += p.x - i;
+							found = true;
+							break;
 						}
 					}
+					if (!found){
+						System.out.print("no match for: "+g.id+" "+p.y);
+					}
+				}
+				
+				int distanza = (int)((g.getDistanza()/400.0)*255);
+				System.out.println(g.id+" distanza stimata: "+ distanza);
+				
+				for (SpecialPixel p : g.bordoDestra.values()) {
+					resultDx.setRGB(p.x, p.y, distanza* 0x00010101);
 				}
 			}
-
 		}
 		JFrame mainOut = new JFrame();
 		mainOut.setLayout(new GridLayout(1, 2));
@@ -182,7 +199,7 @@ public class Loader {
 		sxLabel.setText("Sinistra");
 		sxLabel.setVerticalTextPosition(JLabel.BOTTOM);
 		sxLabel.setHorizontalTextPosition(JLabel.CENTER);
-		
+
 		JLabel dxLabel = new JLabel(new ImageIcon(resultDx));
 		dxLabel.setText("Destra");
 		dxLabel.setVerticalTextPosition(JLabel.BOTTOM);
