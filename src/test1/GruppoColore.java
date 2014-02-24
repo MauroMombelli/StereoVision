@@ -16,6 +16,8 @@ public class GruppoColore {
 	TreeMap<Integer, SpecialPixel> bordoDestra = new TreeMap<Integer, SpecialPixel>();
 	
 	int sommaDistanza = 0;
+
+	public int distanza = -1;
 	
 	public GruppoColore(int colore) {
 		id = NEXT_FREE_ID++;
